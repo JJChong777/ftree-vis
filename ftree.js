@@ -3,6 +3,8 @@ $(document).ready(docMain);
 var conf = new Object();
 conf['depth'] = 3;
 conf['width'] = 8;
+conf['oversub'] = 1;
+conf['gpus'] = 0;
 
 var controlVisible = true;
 
@@ -94,21 +96,44 @@ function drawFatTree(depth, width) {
                 .attr("y", y - podh/2);
         }
     }
-
+    
+    // Modified drawHost (Gemini)
     function drawHost(x, y, dy, dx) {
-        svg.append("line")
-            .attr("class", "cable")
-            .attr("x1", x)
-            .attr("y1", y)
-            .attr("x2", x + dx)
-            .attr("y2", y + dy);
+        // Draw the main server/rack
+        svg.append("rect")
+            .attr("class", "host-rack")
+            .attr("x", x + dx - 5)
+            .attr("y", y + dy - 5)
+            .attr("width", 10)
+            .attr("height", 10);
 
-        svg.append("circle")
-            .attr("class", "host")
-            .attr("cx", x + dx)
-            .attr("cy", y + dy)
-            .attr("r", hostr);
+        // If it's an AI rack, draw small GPU dots inside
+        var gpuCount = conf['gpus'];
+        for (var i = 0; i < gpuCount; i++) {
+            svg.append("circle")
+                .attr("class", "gpu-core")
+                .attr("cx", x + dx - 3 + (i % 3) * 3)
+                .attr("cy", y + dy - 3 + Math.floor(i / 3) * 3)
+                .attr("r", 1)
+                .style("fill", "#00ff00"); // AI "Green"
+        }
     }
+    
+    // // original drawHost
+    // function drawHost(x, y, dy, dx) {
+    //     svg.append("line")
+    //         .attr("class", "cable")
+    //         .attr("x1", x)
+    //         .attr("y1", y)
+    //         .attr("x2", x + dx)
+    //         .attr("y2", y + dy);
+
+    //     svg.append("circle")
+    //         .attr("class", "host")
+    //         .attr("cx", x + dx)
+    //         .attr("cy", y + dy)
+    //         .attr("r", hostr);
+    // }
 
     function drawHosts(list, y, direction) {
         for (var i = 0; i < list.length; i++) {
@@ -134,6 +159,9 @@ function drawFatTree(depth, width) {
         var ngroup = kexp(d);
 
         var perbundle = pergroup / k;
+
+        // oversub var
+        var oversubRatio = conf['oversub'] || 1;
         
         for (var i = 0; i < ngroup; i++) {
             var offset = pergroup * i;
@@ -142,6 +170,7 @@ function drawFatTree(depth, width) {
                 for (var t = 0; t < perbundle; t++) {
                     var ichild = offset + boffset + t;
                     for (var d = 0; d < k; d++) {
+                        if (d_idx % oversubRatio === 0) {
                         var ifather = offset + perbundle * d + t;
                         svg.append("line")
                             .attr("class", "cable")
@@ -149,6 +178,7 @@ function drawFatTree(depth, width) {
                             .attr("y1", y1)
                             .attr("x2", list2[ichild])
                             .attr("y2", y2);
+                        }
                     }
                 }
             }
@@ -208,6 +238,8 @@ function formatNum(x) {
     return x;
 }
 
+
+
 function formInit() {
     var form = d3.select("form");
 
@@ -225,5 +257,7 @@ function formInit() {
 
     hook("depth", confInt);
     hook("width", confInt);
+    hook("oversub", confInt);
+    hook("gpus", confInt);
 }
 
