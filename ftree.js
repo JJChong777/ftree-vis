@@ -170,7 +170,7 @@ function drawFatTree(depth, width) {
                 for (var t = 0; t < perbundle; t++) {
                     var ichild = offset + boffset + t;
                     for (var d = 0; d < k; d++) {
-                        if (d_idx % oversubRatio === 0) {
+                        if (d % oversubRatio === 0) {
                         var ifather = offset + perbundle * d + t;
                         svg.append("line")
                             .attr("class", "cable")
